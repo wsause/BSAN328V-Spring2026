@@ -14,48 +14,41 @@
         <a href="/search">Search Jobs</a>
     </nav>
     <main>
-        <form id="applicationForm">
-            <input type="hidden" id="job_id">
-            <label>First Name: <input type="text" id="first_name" required></label><br>
-            <label>Last Name: <input type="text" id="last_name" required></label><br>
-            <label>Email: <input type="email" id="email" required></label><br>
-            <label>Phone: <input type="text" id="phone"></label><br>
-            <label>Address: <input type="text" id="address"></label><br>
-            <label>Education: <input type="text" id="education"></label><br>
-            <label>Experience (years): <input type="number" id="experience"></label><br>
+        <form id="applicationForm" action="/applications/submit" method="post">
+            <!-- <input type="hidden" id="job_id"> -->
+            <label>Job ID: <input type="text" id="job_id" name="job_id" required></label><br>
+            <label>First Name: <input type="text" id="first_name" name="first_name" required></label><br>
+            <label>Last Name: <input type="text" id="last_name" name="last_name" required></label><br>
+            <label>Email: <input type="email" id="email" name="email" required></label><br>
+            <label>Phone: <input type="text" id="phone" name="phone"></label><br>
+            <label>Address: <input type="text" id="address" name="address"></label><br>
+            <label>Education: <input type="text" id="education" name="education"></label><br>
+            <label>Experience (years): <input type="number" id="experience" name="experience"></label><br>
             <button type="submit">Submit Application</button>
         </form>
         <p id="result"></p>
     </main>
 
+    <!-- 
+    Flask flash message: 
+    get_flashed_messages() retrieves messages stored by Flask's flash() function.
+    Jinja2 inserts them here; browser sees only the resulting HTML/JS.
+    -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <script>
+                alert("{{ messages[0] }}");
+            </script>
+        {% endif %}
+    {% endwith %}
+
     <script>
-    // Prefill job ID if passed in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const jobId = urlParams.get("job_id");
-    if (jobId) document.getElementById("job_id").value = jobId;
+        const params = new URLSearchParams(window.location.search);
+        const jobId = params.get("job_id");
 
-    document.getElementById("applicationForm").addEventListener("submit", async function(e) {
-        e.preventDefault();
-        const data = {
-            job_id: document.getElementById("job_id").value,
-            first_name: document.getElementById("first_name").value,
-            last_name: document.getElementById("last_name").value,
-            email: document.getElementById("email").value,
-            phone: document.getElementById("phone").value,
-            address: document.getElementById("address").value,
-            education: document.getElementById("education").value,
-            experience: document.getElementById("experience").value
-        };
-
-        const response = await fetch("/applications/submit", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-        });
-
-        const result = await response.json();
-        document.getElementById("result").textContent = result.message;
-    });
+        if (jobId) {
+            document.getElementById("job_id").value = jobId;
+        }
     </script>
 </body>
 </html>

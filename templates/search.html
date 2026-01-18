@@ -14,8 +14,8 @@
         <a href="/apply">Apply</a>
     </nav>
     <main>
-        <form id="searchForm">
-            <input type="text" id="keyword" placeholder="Enter keyword...">
+        <form id="searchForm" action="/jobs/search" method="get">
+            <input type="text" id="keyword" name="keyword" placeholder="Enter keyword...">
             <button type="submit">Search</button>
         </form>
         <table id="jobsTable">
@@ -25,37 +25,25 @@
                     <th>Title</th>
                     <th>Description</th>
                     <th>Salary</th>
+                    <th>Date Posted</th>
+                    <th>Department</th>
                     <th>Apply</th>
                 </tr>
             </thead>
             <tbody>
-                <!-- Jobs will be inserted here -->
+                {% for job in jobs %}
+                    <tr>
+                        <td>{{ job[0] }}</td>
+                        <td>{{ job[1] }}</td>
+                        <td>{{ job[2] }}</td>
+                        <td>{{ job[3] }}</td>
+                        <td>{{ job[4] }}</td>
+                        <td>{{ job[5] }}</td>
+                        <td><a href="{{ url_for('apply_page') }}?job_id={{ job[0] }}">Apply</a></td>
+                    </tr>
+                {% endfor %}
             </tbody>
         </table>
     </main>
-
-    <script>
-    document.getElementById("searchForm").addEventListener("submit", async function(e) {
-        e.preventDefault();
-        const keyword = document.getElementById("keyword").value;
-        const response = await fetch(`/jobs/search?keyword=${encodeURIComponent(keyword)}`);
-        const data = await response.json();
-
-        const tbody = document.querySelector("#jobsTable tbody");
-        tbody.innerHTML = "";
-
-        data.jobs.forEach(job => {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td>${job.JOB_ID}</td>
-                <td>${job.JOB_TITLE}</td>
-                <td>${job.JOB_DESCRIPTION}</td>
-                <td>${job.JOB_SALARY}</td>
-                <td><a href="/apply?job_id=${job.JOB_ID}">Apply</a></td>
-            `;
-            tbody.appendChild(row);
-        });
-    });
-    </script>
 </body>
 </html>

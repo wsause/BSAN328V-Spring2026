@@ -1,8 +1,12 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, flash, request, jsonify, render_template, redirect, url_for
 import sqlite3
 import random
+import os
 
 app = Flask(__name__)
+# Secret key is required for sessions and flash messages to work
+# It signs data sent to the browser so Flask can trust it
+app.secret_key = os.urandom(24)
 
 def getDBConnection():
     con = sqlite3.connect("EmploymentManagement.db")
@@ -31,23 +35,19 @@ def searchJobListings():
     con = getDBConnection()
     cursor = con.cursor()
     cursor.execute("""
-                    SELECT * FROM JOB
+                    SELECT JOB_ID, JOB_TITLE, JOB_DESCRIPTION, JOB_SALARY, JOB_DATEPOSTED, DEPT_NAME FROM JOB
+                    JOIN DEPARTMENT ON JOB.DEPT_ID = DEPARTMENT.DEPT_ID
                     WHERE JOB_TITLE LIKE ? OR JOB_DESCRIPTION LIKE ?""", ('%' + keyword + '%', '%' + keyword + '%'))
     rows = cursor.fetchall()
     con.close()
 
-    headers = []
-    for col in cursor.description:
-        headers.append(col[0])
-
     jobs = []
     for row in rows:
-        jobs.append(dict(zip(headers, row)))
+        jobs.append(row)
 
-    return jsonify({
-        "count": len(jobs),
-        "jobs": jobs
-    })
+    print("testing")
+    print(jobs)
+    return render_template("search.html", jobs=jobs)
 
 
 # -------------------------------------------------
@@ -55,14 +55,18 @@ def searchJobListings():
 # -------------------------------------------------
 @app.route("/applications/submit", methods=["POST"])
 def submitApplication():
-    data = request.get_json()
-
-    job_id = data.get("job_id")
-
-    con = getDBConnection()
-    cursor = con.cursor()
+    job_id = request.form.get("job_id")
+    first_name = request.form.get("first_name")
+    last_name = request.form.get("last_name")
+    email = request.form.get("email")
+    phone = request.form.get("phone")
+    address = request.form.get("address")
+    education = request.form.get("education")
+    experience = request.form.get("experience")
 
     # Verify job exists
+    con = getDBConnection()
+    cursor = con.cursor()
     cursor.execute("SELECT * FROM JOB WHERE JOB_ID = ?", (job_id,))
     job = cursor.fetchone()
 
@@ -87,28 +91,25 @@ def submitApplication():
             (
                 app_id,
                 job_id,
-                data.get("first_name"),
-                data.get("last_name"),
-                data.get("email"),
-                data.get("phone"),
-                data.get("address"),
-                data.get("education"),
-                data.get("experience")
+                first_name,
+                last_name,
+                email,
+                phone,
+                address,
+                education,
+                experience
             )
         )
 
         con.commit()
         con.close()
 
-        return jsonify({
-            "message": "Application submitted successfully",
-            "application_id": app_id
-        }), 201
+        flash("Application submitted successfully!")
+        return redirect(url_for("apply_page"))
     else:
         con.close()
-        return jsonify({
-            "message": "Job not found"
-        }), 404
+        flash("Job not found.")
+        return redirect(url_for("apply_page"))
 
 if __name__ == "__main__":
     app.run(debug=True)
